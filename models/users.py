@@ -7,7 +7,7 @@ class User(BaseModel):
     username: str
     name: str
     lastname: str
-    hashed_password: str
+    _hashed_password: str
     created_at: datetime
     updated_at: datetime
 

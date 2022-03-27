@@ -35,15 +35,17 @@ def get_user_by_id(user_id: int):
 @router.post("/create/", response_model=User)
 def create_user(instance: UserIn):
     values = instance.dict()
+
+    raw_password = values.pop("password", None)
+    values.pop("password2", None)
     values['created_at'] = datetime.datetime.now()
     values['updated_at'] = datetime.datetime.now()
-    values["hashed_password"] = hash_passwd(instance.password)
+    values["hashed_password"] = hash_passwd(raw_password)
 
     user = User(**values)
 
     with get_session() as session:
-        new_user = db.User(**user.dict())
-        print(new_user)
+        new_user = db.User(**values)
         session.add(new_user)
         session.commit()
 
