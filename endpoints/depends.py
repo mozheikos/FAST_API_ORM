@@ -22,4 +22,5 @@ def get_current_user(
 
     if not user:
         raise cred_exception
-    return User.object_parse(user)
+    # return User.object_parse(user)
+    return user

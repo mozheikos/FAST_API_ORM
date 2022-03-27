@@ -1,7 +1,7 @@
 import datetime
 from core.security import hash_passwd
 from fastapi import APIRouter, Depends, HTTPException, status
-from models.users import User, UserIn
+from models.users import User, UserIn, UpdatedUser
 from typing import List
 import db.models as db
 from db.base import get_session
@@ -55,22 +55,35 @@ def create_user(instance: UserIn):
 
 @router.put("/update/", response_model=User)
 def update_user(
-        instance: UserIn,
-        current_user: User = Depends(get_current_user)):
+        instance: UpdatedUser,
+        current_user: db.User = Depends(get_current_user)):
 
     with get_session() as session:
-        user = session.query(db.User).where(db.User.username == current_user.username).one_or_none()
-        if not user:
+
+        if not current_user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
-        user.username = instance.username
-        user.name = instance.name
-        user.lastname = instance.lastname
-        user.hashed_password = hash_passwd(instance.password)
-        user.updated_at = datetime.datetime.now()
-        session.add(user)
+
+        current_user.name = instance.name
+        current_user.lastname = instance.lastname
+        current_user.updated_at = datetime.datetime.now()
+        session.add(current_user)
         session.commit()
 
-        user = session.query(db.User).filter(db.User.id == user.id).one_or_none()
+        user = session.query(db.User).filter(db.User.id == current_user.id).one_or_none()
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
         return User.object_parse(user)
+
+
+@router.delete("/delete/")
+def delete_user(
+        current_user: db.User = Depends(get_current_user)):
+
+    name = current_user.username
+
+    with get_session() as session:
+
+        session.delete(current_user)
+        session.commit()
+
+        return {"user": name}
